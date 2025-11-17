@@ -1,0 +1,36 @@
+
+[
+    {
+        "employee_id": 101,
+        "name": "Suresh Kumar",
+        "role": "Software Engineer",
+        "department": "Engineering",
+        "salary": 95000,
+        "joining_date": "2021-06-15",
+        "skills": ["Python", "React", "Docker"],
+        "location": "Bangalore",
+        "active": true
+    },
+    {
+        "employee_id": 102,
+        "name": "Priya Sharma",
+        "role": "QA Engineer",
+        "department": "Quality Assurance",
+        "salary": 80000,
+        "joining_date": "2020-09-10",
+        "skills": ["Selenium", "Cypress", "Jenkins"],
+        "location": "Pune",
+        "active": true
+    },
+    {
+        "employee_id": 103,
+        "name": "Rahul Mehta",
+        "role": "DevOps Engineer",
+        "department": "Infrastructure",
+        "salary": 105000,
+        "joining_date": "2019-02-01",
+        "skills": ["AWS", "Kubernetes", "Terraform"],
+        "location": "Hyderabad",
+        "active": false
+    }
+]
