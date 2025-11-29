@@ -186,7 +186,7 @@ Treat each retriever as a tool inside an agentic workflow.
 ### DEBUGGING GRAPH FLOW
    1. add and load following .env variables
    ```
-   LANGSMITH_API_KEY = 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
+   LANGSMITH_API_KEY = lsv2_pt_xxxxx
    LANGCHAIN_TRACING_V2=true
    LANGCHAIN_PROJEC
    ```
