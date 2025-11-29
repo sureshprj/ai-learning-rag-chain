@@ -1,8 +1,12 @@
 # AI Chatbot Architecture Notes
 
+Reference guide for building RAG-enabled chatbots, agent workflows, and LangGraph automations.
+
+---
+
 ## ReAct Architecture
 
-**ReAct** = Reasoning + Action (tool use)
+**ReAct** stands for *Reasoning + Acting*. The model reasons about next steps, selects tools, executes actions, and iterates until the goal is satisfied.
 
 ![ReAct](./assets/react.png)
 
@@ -10,250 +14,263 @@
 
 ## Retrieval-Augmented Generation (RAG)
 
-### What is RAG?
+### RAG basics
 
-RAG lets an LLM use external information (documents, databases, wikis, APIs) retrieved at query time to produce more accurate answers.
+RAG supplements an LLM with external knowledge (documents, wikis, APIs, databases) that is retrieved at query time so answers stay accurate and grounded.
 
-![Prompt vs Fine-tuning vs RAG](./assets/promt-finetuning-RAG.jpeg)
+![Prompt vs Fine-tuning vs RAG](./assets/prompt-finetuning-RAG.jpeg)
 
-### RAG vs Alternatives
+### RAG vs. other techniques
 
 | Approach | Description | Pros | Cons |
 |----------|-------------|------|------|
-| **Prompt Engineering** | Simple prompts; no external data | Fast and simple | Limited knowledge |
-| **Fine-tuning** | Train on domain data | Good for style/skills | Not suitable for fresh facts |
-| **RAG** | On-demand external knowledge | Up-to-date, explainable sources | More complex setup |
+| **Prompt engineering** | Carefully crafted prompts only | Fast, no infra changes | Limited knowledge, brittle |
+| **Fine-tuning** | Train on domain data | Great for tone/skills | Expensive, goes stale |
+| **RAG** | Retrieve domain data on demand | Fresh facts, cite sources | Needs retriever + storage |
 
-### Core Components
+### Core building blocks
 
-- **Retrieval**: Fetch relevant information from a source (database, API, website)
-- **Augmentation**: Enrich retrieved content with metadata (e.g., source, created date)
-- **Generation**: Use the retrieved context to generate the final answer
+- **Retrieval**: pull candidate passages from knowledge sources
+- **Augmentation**: attach metadata (source, timestamp, rank, etc.)
+- **Generation**: feed the augmented context into the LLM for the final answer
 
 ![RAG Core Components](./assets/core_comps.jpeg)
 
 ---
 
-## RAG Workflow Phases
+## RAG workflow
 
-RAG workflow consists of three main phases:
+1. **Document ingestion**
+2. **Query processing**
+3. **Generation**
 
-1. **Document Ingestion**
-2. **Query Processing**
-3. **Generation Phase**
+### 1. Document ingestion & preprocessing
 
-### Document Ingestion and Preprocessing Phase (Pre-step)
+Prepare domain data so it can be retrieved efficiently.
 
-This is the preparation phase where domain data is prepared for efficient retrieval:
-
-- **Preprocessing**: Load the data, clean, chunk into small pieces, embed, and store as vectors
-- **Storage**: Store domain data in a vector database for efficient similarity search
-- **Query-time**: A retriever finds the most relevant chunks; the LLM generates an answer using search techniques (similarity search, cosine similarity, etc.)
+- **Preprocess**: load, clean, chunk, embed, and persist vectors.
+- **Store**: keep embeddings in a vector store/database for fast similarity search.
+- **Query-time**: a retriever returns relevant chunks; the LLM consumes them.
 
 ![Document Ingestion](./assets/doc_injection.jpeg)
 
-#### Document Ingestion Steps
+#### Key ingestion steps
 
-1. **Load the Data**: 
-    - Import documents from various sources 
-    - From any data source (text, word, database, excel file) convert it to Documents type
-    - From `langchain_core.documents import Document`
-    - Document type will have metadata and page_content
+1. **Load the data**  
+   Import from any source (text, Word, DBs, spreadsheets) and normalize into LangChain `Document` objects (`page_content` + `metadata`).
 
-2. **Splitting Text**: 
-    Divide documents into manageable chunks (using different techniques: Character, Recursive, Token).
-    Splitting keeps chunks small, semantically meaningful, and efficient for both embedding and retrieval. In RAG, document splitting isn't optional — it's foundational.
-    You split text to ensure:
+2. **Split the text**  
+   Chunking is mandatory to stay within token limits, improve recall, reduce cost, and preserve meaning. Popular splitters:
+   - Character splitter (fixed width)
+   - Recursive splitter (paragraph → sentence → word hierarchy)
+   - Token splitter (model-aware window)
+   - Semantic splitter (meaning-based boundaries)
 
-    - You stay under model token limits
-    - You improve retrieval accuracy
-    - You minimize cost
-    - You maintain semantic integrity
-    
-    **Main splitting techniques:**
-    1. **Character Splitter**: Split by fixed character count
-    2. **Recursive Splitter**: Split by hierarchy (paragraphs → sentences → words)
-    3. **Token Text Splitter**: Split based on token count for the target model
-    4. **Semantic Text Splitting**: Best approach based on meaning
-    
-3. **Embedding Model**: 
-    - An embedding is a numerical representation of data — typically a vector (a list of numbers) — that captures the meaning or characteristics of that data in a way that machines can process.
-    - An embedding model is a machine learning model trained to convert input data (like text, images, or audio) into these high-dimensional numerical vectors. (embedding models will have 100+ dimensions)
-    - An embedding model takes raw input (like text, an image, or even audio) and converts it into a dense numerical vector — a list of numbers that represents the meaning or essence of that input.
-    - Traditional keyword search only matches exact words. Embeddings allow understanding the meanings.
+3. **Embed**  
+   Embeddings map data into high-dimensional vectors that encode meaning. Use cases include semantic search, chatbots, recommendations, and anomaly detection. Example model: `sentence-transformers/all-MiniLM-L6-v2` (384 dims). Higher-dimensional models trade cost for accuracy.
 
-    **Real-World Use Cases:**
-    - **Semantic Search**: Query: "How to reset my router?" - System finds documents with similar embeddings instead of keyword matches.
-    - **Chatbots & QA**: Retrieve contextually relevant information based on embedding similarity.
-    - **Recommendation Systems**: Suggest similar movies/products based on vector similarity.
-    - **Anomaly Detection**: Identify outliers in embedding spaces and convert text chunks into vector representations.
-    
-    In the code example, I used `sentence-transformers/all-MiniLM-L6-v2` model which uses 384 dimensions, but if you want more accuracy, use models with more dimensions.
+4. **Store vectors**  
+   - **Vector store**: lightweight (ChromaDB, FAISS, in-memory files) for quick prototyping.  
+   - **Vector database**: production-grade services (Pinecone, Milvus, Weaviate, Qdrant) with indexing, filtering, and scaling.
 
-    See the example code for this.
-
-4. **Storage: Vector Database**: 
-    Store embeddings in a vector database.
-
-    **Vector Store:**
-    Lightweight. You can keep vectors in local memory, files, or simple tools like ChromaDB or FAISS.
-
-    **Vector Database:**
-    A full database built for vectors. Examples include Pinecone, Milvus, Weaviate, Qdrant. It handles indexing, scaling, filtering, persistence.
-
----
-
-### Query Processing Phase
-
-When a user searches for something:
-
-1. **Convert to Vector**: The input text is converted into a vector representation
-2. **Compare**: Compare with stored vectors in the database using search techniques
-3. **Retrieve**: Find the most relevant information chunks
-4. **Enrich**: Append retrieved content with useful metadata (source, relevance score, etc.)
+### 2. Query processing
 
 ![Query Processing](./assets/query_process.jpeg)
 
-### Searching Techniques 
+1. Convert the user query into an embedding.  
+2. Compare it with stored vectors (cosine similarity, dot product, etc.).  
+3. Retrieve the top chunks.  
+4. Enrich the results with metadata, scores, and provenance.
 
-#### Similarity Search
+#### Retrieval strategies
 
-After storing the data in the vector database, we use similarity search by default (in `simple_rag.py`).
+- **Similarity search** (default in `simple_rag.py`)
+- **Hybrid search**: blend sparse (BM25/TF-IDF) + dense retrieval with tunable weights
+- **LLM re-ranking**: hand top-k chunks to the LLM for reranking
+- **Maximal Marginal Relevance (MMR)**: balances relevance with diversity, available via `search_type="mmr"` to avoid near-duplicate chunks
 
-#### Hybrid Searching Techniques
+### 3. Query enhancement
 
-There is a more advanced technique called hybrid search, which combines dense retrieval (similarity-based) and sparse retrieval (based on word occurrences). We can choose based on weightage (ex: 50-50).
+Instead of sending the raw user query straight to the retriever, improve it first:
 
-**Sparse Retrieval:**
-- Matches exact words using techniques such as TF-IDF, BM25
-- Helpful in some cases (like keywords, special words in the doc)
-
-**Dense Retrieval:**
-- Uses embeddings for semantic similarity search
-
-#### LLM-Based Ranking
-
-This is another search technique: after retrieving top-k results, we can give them to LLM for ranking.
-
-#### MMR Retrieval (Maximal Marginal Relevance Retrieval)
-
-It's a reranking strategy used in RAG to get results that are: 
-- Relevant to the query, AND 
-- Not duplicates of each other (high diversity)
-
-In short, it helps to remove redundant documents (repeated docs). It prevents the common issue: "Vector store returns 5 almost-identical chunks."
-
-**MMR retrieval:**
-- 👉 A smarter reranker that reduces redundancy
-- 👉 Balances relevance + diversity
-- 👉 Supported by LangChain via `search_type="mmr"`
-
----
-
-### Query Enhancement
-
-Instead of giving user query directly to the retriever, there are ways to enhance the user query before proceeding with searching with vectors (similarity search with vector DB).
-
-**Workflow:**
 ```
-user query => [LLM + prompt] => better query => retriever
+user query → [LLM + prompt] → refined query → retriever
 ```
 
-#### Query Expansion Technique
+- **Query expansion**: add synonyms, related terms, entities (e.g., kidney pain → renal pain, nephrology, flank pain).  
+- **Query decomposition**: break complex questions into sub-queries, retrieve per sub-query, merge answers.  
+- **HyDE (Hypothetical Document Embeddings)**: let the LLM draft a synthetic answer, embed that document, then retrieve against it (LangChain’s `HypotheticalDocumentRetriever` provides a ready-made flow).
 
-Expands the user query by adding relevant synonyms, related terms, entities, or keywords so the retriever can match more documents.
+### 4. Generation
 
-**Example:** "kidney pain" → "renal pain, nephrology, kidney inflammation, flank pain"
-
-#### Query Decomposition Technique
-
-Breaks a complex query into smaller, simpler sub-queries and retrieves for each part separately. Each sub-query will make an LLM call, get all the LLM outputs, and combine them into a single answer.
-
-#### HyDE Technique (Hypothetical Document Embeddings)
-
-The LLM hallucinates (generates) a hypothetical document based on the user's query, and that synthetic document is embedded for retrieval instead of the raw query.
-
-**How it works:**
-- The LLM generates a hypothetical answer document to the user query
-- That synthetic document is embedded for retrieval instead of the raw query
-- This helps improve retrieval accuracy by matching on the expected answer structure
-
-**Implementation:**
-We can implement our own logic or use LangChain's `HypotheticalDocumentRetriever`.
+The LLM receives the original query plus the retrieved context and generates an answer that is grounded in the provided evidence.
 
 ---
 
-### Generation Phase
+## Handling non-text content
 
-The original query + retrieved relevant information will be sent to the LLM, which will generate the final output based on the combined context.
+### OCR (Optical Character Recognition)
 
----
+OCR converts pixels to characters only—no layout or semantic understanding.
 
-## Handling Different Types of Documents (Image, Audio, Video)
+**Example**  
+Invoice → OCR → `"Invoice No: 123, Amount: $450"`
 
-### What is OCR? (Optical Character Recognition)
-
-OCR = Technology that extracts text **from** an image or PDF. OCR does **NOT** understand layout, meaning, or context. It only converts pixels → characters.
-
-**Example:**
-- You upload an invoice → OCR reads the text
-- Output = plain text only: "Invoice No: 123, Amount: $450"
-
-**Limitations:**
-- Only extracts text characters
-- No understanding of document structure or context
-- Requires separate processing for meaning
+**Limitations**  
+- Raw text output only  
+- No structure or context  
+- Needs downstream parsing to add meaning
 
 ### Multimodal RAG
 
-Multimodal RAG = RAG that works with text + images + diagrams + tables.
+Uses multimodal models (GPT-4o, Gemini, Claude Vision, etc.) that understand text + images + diagrams natively.
 
-**How it works:**
-- You send the raw image directly to a multimodal model (like GPT-4o, Gemini, Claude Vision)
-- The model "understands" the image (text, layout, objects, charts)
-- It retrieves relevant info and generates responses
-- No need for separate OCR
+**Workflow**
+- Send the raw visual asset
+- Model interprets layout, tables, charts, and text
+- Retrieval + generation happens in a single multimodal loop
+- No separate OCR stage required
 
-**Best for:**
-- Documents with visual elements
-- Dashboards and reports
-- Forms and invoices
-- Charts and diagrams
-- Complex layouts with text and images
+**Best suited for**
+- Reports, dashboards, and slide decks
+- Forms, invoices, receipts
+- Technical diagrams and tables
 
-**Advantages over OCR:**
-- Understands context and meaning
-- Can interpret layout and structure
-- Handles visual elements (charts, diagrams)
-- More accurate than simple text extraction
-    
+**Advantages over OCR**
+- Retains layout and context
+- Interprets visual elements
+- Produces more accurate answers
 
------
------
+---
 
-# LANG GRAPH
+# LangGraph Essentials
 
-refer: AIAgentWithrag.ipynb
+**Reference notebook:** `AIAgentWithrag.ipynb`
 
-Node - simple python methods
-Edges - connect nodes ()
-State  - state, which can shared between nodes
-State Graph -> graph of the entrie wrokflow
+- **Node**: a Python callable
+- **Edge**: transitions between nodes
+- **State**: shared data passed between nodes
+- **State graph**: the orchestrated workflow
+
+## Memory management
+
+LangGraph checkpoints state automatically. Persist it across sessions with `MemorySaver()`:
+
+```python
+memory = MemorySaver()
+graph = graph_builder.compile(memory)
+```
+
+## Streaming options
+
+Two APIs (`stream`, `astream`) and two payload types (`values`, `updates`).
+
+```python
+graph.stream({"messages": ""}, stream_mode="updates")
+graph.stream({"messages": ""}, stream_mode="values")
+
+graph.astream_events  # useful for debugging
+```
+
+---
+
+## LangGraph + RAG (Agentic RAG)
+
+Treat each retriever as a tool inside an agentic workflow.
+
+**Handy helpers**
+- `create_react_agent()` builds an LLM + tools stack quickly.
+- `state.model_copy(update={"param": "new value"})` clones and mutates state immutably.
+- `llm.with_structured_output(YourModel)` enforces JSON/typed responses.
+
+### DEBUGGING GRAPH FLOW
+   1. add and load following .env variables
+   ```
+   LANGSMITH_API_KEY = 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
+   LANGCHAIN_TRACING_V2=true
+   LANGCHAIN_PROJEC
+   ```
+   2. add langraph.json file
+
+   3. run in cmd
+   langgraph dev
+   it will launch the url in a tab
+   
+### Autonomous RAG loop
+
+```
+START → Planner / Query Decomposer
+      → Retrieve (vector) / Retrieve (sparse) / Retrieve (API)
+      → Aggregator
+      → Generator
+      → Self-reflection
+        ├─ OK → END
+        └─ REFINE → improve query → retrieve again
+```
+
+- **Chain-of-thought planning**: break big questions into sub-queries and solve each.  
+- **Query planning & decomposition**: similar to CoT but tailored for retrieval.  
+- **Self-reflection**: evaluate outputs; rerun the loop if the answer is weak.  
+- **Iterative retrieval**: `User → Retrieve → Generate → Reflect → (loop)` until quality is acceptable.  
+- **Answer synthesis**: aggregate evidence from multiple sources, deduplicate overlaps, and produce a consolidated response.
+
+------
+### Multi Agents
+
+   Agents means, if the llm have tools(not a simple input=>oupt) that can be called as an agent. it's like divide and conquer, create agent for each task or domain and route the tasks to the correct expert.
+   
+   #### Single agent
+   ![agent](./assets/agent.png)
+
+   * Multi agent (more than one agent work)
+   * Supervisor Multi Agent (supervisor Agent will take care the child agents)
+   * Hierarichal Agents ( more then one supervior can be called as hierarichal agent)
+
+   ![supervisor_agent](./assets/supervisor_agent.png)
 
 
-## Memory Saver
-    Langgraph use a check pointer to automatically sae the graph state after each step. 
 
-    # to make the memory across the sessions need (memory = MemorySaver())
-    memory = MemorySaver()
-    graph = graph_builder.compile(memory)
+------
+#### Evaluation of RAG pipline/ Testing the RAG using langraph
 
-## Streaming
-    graph state chagnes/output can streamed. there are two methods astream and stream and two params(values and updates)
-    
-    ### stream
-    graph.stream({"messages": ""}, stream_mode="updates")
-    graph.stream({"messages": ""}, stream_mode="values")
+   -- Chose which llm is best in producing the result.
+   -- we need to test our rag app whether it produce correct output or not.
+      
+   #### Overview
+   A typical RAG evaluation workflow consists of three main steps:
 
-    ##  astream - maninly used for debugging purpose
-        graph.astream_events
+   1. Creating a dataset with questions and their expected answers
+   2. Running your RAG application on those questions
+   3. Using evaluators to measure how well your application performed, looking at factors like:
+   - Answer relevance
+   - Answer accuracy
+   - Retrieval quality
+
+   In simple, if you want to test your agentic application, this evaluation is really helpful. first we need to create the datasets (sample question and answers) and we can it with evaluators (ex: we can use llm as judge actual answer vs ai output) 
+
+----
+
+### Graph Database
+
+   data will be stored in graph strutures, nodes,edges and labels.
+   Neo4j is one of the popular graph data base.
+
+   Use Neo4j only if: (ex: social media apps, Supply Chain & Logistics)
+      Your data is heavily relational
+
+      Queries involve multi-hop traversal
+
+      You need paths, not just records
+
+      Structure matters more than text
+
+   Don’t use Neo4j when:
+      Your data is mostly documents, JSON, or tables
+
+      Retrieval is semantic, not relational
+
+      The system is CRUD-heavy
+
+      Relationships are shallow (1–2 levels)
+
+   ![graph](./assets/graph_data.jpeg)

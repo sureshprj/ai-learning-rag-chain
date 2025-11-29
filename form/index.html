@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Personal Information Form</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {font-family: Arial, sans-serif; background: linear-gradient(135deg,#f6d365,#fda085); margin:0; display:flex; justify-content:center; align-items:center; height:100vh;}
+.form-container {background:white; padding:30px; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.1); max-width:400px; width:100%;}
+h2 {text-align:center; margin-bottom:20px; color:#333;}
+label {display:block; margin-bottom:5px; color:#555;}
+input[type="text"], input[type="number"], input[type="email"] {width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:5px; font-size:16px;}
+input[type="submit"] {background:#fda085; color:white; border:none; padding:12px; width:100%; font-size:16px; border-radius:5px; cursor:pointer; transition:background 0.3s;}
+input[type="submit"]:hover {background:#f6d365;}
+</style>
+</head>
+<body>
+<div class="form-container">
+<h2>Personal Information</h2>
+<form action="#" method="post">
+<label for="name">Name</label>
+<input type="text" id="name" name="name" placeholder="Enter your name" required>
+<label for="age">Age</label>
+<input type="number" id="age" name="age" placeholder="Enter your age" required min="0">
+<label for="email">Email</label>
+<input type="email" id="email" name="email" placeholder="Enter your email" required>
+<input type="submit" value="Submit">
+</form>
+</div>
+</body>
+</html>
