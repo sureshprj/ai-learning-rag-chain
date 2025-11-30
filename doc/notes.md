@@ -11,6 +11,14 @@ Reference guide for building RAG-enabled chatbots, agent workflows, and LangGrap
 ![ReAct](./assets/react.png)
 
 ---
+### explore more on
+
+1. how to implement security checks(guardrils)
+2. how to update the vector store on the doucment chagnes
+3. prod level approaches
+
+
+-----
 
 ## Retrieval-Augmented Generation (RAG)
 
@@ -19,6 +27,7 @@ Reference guide for building RAG-enabled chatbots, agent workflows, and LangGrap
 RAG supplements an LLM with external knowledge (documents, wikis, APIs, databases) that is retrieved at query time so answers stay accurate and grounded.
 
 ![Prompt vs Fine-tuning vs RAG](./assets/prompt-finetuning-RAG.jpeg)
+
 
 ### RAG vs. other techniques
 
