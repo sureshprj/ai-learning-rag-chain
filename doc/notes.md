@@ -17,7 +17,6 @@ Reference guide for building RAG-enabled chatbots, agent workflows, and LangGrap
 2. how to update the vector store on the doucment chagnes
 3. prod level approaches
 
-
 -----
 
 ## Retrieval-Augmented Generation (RAG)
