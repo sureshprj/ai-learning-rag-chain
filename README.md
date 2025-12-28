@@ -29,10 +29,10 @@ This project demonstrates the implementation of RAG (Retrieval-Augmented Generat
    uv sync
    ```
 
-4. run the spcific file
-    ```bash
-    uv run python main.py
-    ```
+4. **Run the specific file:**
+   ```bash
+   uv run python main.py
+   ```
 ## Environment Setup
 
 Create a `.env` file in the project root with your API keys and configuration. Example:
@@ -48,7 +48,7 @@ GROQ_API_KEY=your_groq_api_key
 Run the project using one of the available scripts:
 
 - `simple_rag.py` - Simple RAG implementation
-- `chatbot.py` - Chatbot implementation
+- `agentic_rag.py` - Agentic RAG implementation
 - `main.py` - Main entry point
 - Jupyter notebooks for interactive exploration
 

@@ -11,13 +11,14 @@ Reference guide for building RAG-enabled chatbots, agent workflows, and LangGrap
 ![ReAct](./assets/react.png)
 
 ---
-### explore more on
 
-1. how to implement security checks(guardrils)
-2. how to update the vector store on the doucment chagnes
-3. prod level approaches
+### Explore More On
 
------
+1. How to implement security checks (guardrails)
+2. How to update the vector store on document changes
+3. Production-level approaches
+
+---
 
 ## Retrieval-Augmented Generation (RAG)
 
@@ -191,18 +192,22 @@ Treat each retriever as a tool inside an agentic workflow.
 - `state.model_copy(update={"param": "new value"})` clones and mutates state immutably.
 - `llm.with_structured_output(YourModel)` enforces JSON/typed responses.
 
-### DEBUGGING GRAPH FLOW
-   1. add and load following .env variables
-   ```
-   LANGSMITH_API_KEY = lsv2_pt_xxxxx
-   LANGCHAIN_TRACING_V2=true
-   LANGCHAIN_PROJEC
-   ```
-   2. add langraph.json file
+### Debugging Graph Flow
 
-   3. run in cmd
+1. Add and load following `.env` variables:
+   ```env
+   LANGSMITH_API_KEY=lsv2_pt_xxxxx
+   LANGCHAIN_TRACING_V2=true
+   LANGCHAIN_PROJECT=your_project_name
+   ```
+
+2. Add `langraph.json` file
+
+3. Run in command line:
+   ```bash
    langgraph dev
-   it will launch the url in a tab
+   ```
+   It will launch the URL in a tab.
    
 ### Autonomous RAG loop
 
@@ -222,63 +227,66 @@ START → Planner / Query Decomposer
 - **Iterative retrieval**: `User → Retrieve → Generate → Reflect → (loop)` until quality is acceptable.  
 - **Answer synthesis**: aggregate evidence from multiple sources, deduplicate overlaps, and produce a consolidated response.
 
-------
-### Multi Agents
+---
 
-   Agents means, if the llm have tools(not a simple input=>oupt) that can be called as an agent. it's like divide and conquer, create agent for each task or domain and route the tasks to the correct expert.
-   
-   #### Single agent
-   ![agent](./assets/agent.png)
+## Multi-Agent Systems
 
-   * Multi agent (more than one agent work)
-   * Supervisor Multi Agent (supervisor Agent will take care the child agents)
-   * Hierarichal Agents ( more then one supervior can be called as hierarichal agent)
+Agents mean if the LLM has tools (not a simple input => output) that can be called as an agent. It's like divide and conquer—create an agent for each task or domain and route the tasks to the correct expert.
 
-   ![supervisor_agent](./assets/supervisor_agent.png)
+### Single Agent
+
+![Agent](./assets/agent.png)
+
+### Multi-Agent Types
+
+- **Multi-Agent**: More than one agent working together
+- **Supervisor Multi-Agent**: Supervisor agent manages child agents
+- **Hierarchical Agents**: More than one supervisor can be called as hierarchical agent
+
+![Supervisor Agent](./assets/supervisor_agent.png)
 
 
 
-------
-#### Evaluation of RAG pipline/ Testing the RAG using langraph
+---
 
-   -- Chose which llm is best in producing the result.
-   -- we need to test our rag app whether it produce correct output or not.
-      
-   #### Overview
-   A typical RAG evaluation workflow consists of three main steps:
+## Evaluation of RAG Pipeline / Testing the RAG using LangSmith
 
-   1. Creating a dataset with questions and their expected answers
-   2. Running your RAG application on those questions
-   3. Using evaluators to measure how well your application performed, looking at factors like:
+- Choose which LLM is best in producing the result
+- We need to test our RAG app to verify whether it produces correct output or not
+
+### Overview
+
+A typical RAG evaluation workflow consists of three main steps:
+
+1. Creating a dataset with questions and their expected answers
+2. Running your RAG application on those questions
+3. Using evaluators to measure how well your application performed, looking at factors like:
    - Answer relevance
    - Answer accuracy
    - Retrieval quality
 
-   In simple, if you want to test your agentic application, this evaluation is really helpful. first we need to create the datasets (sample question and answers) and we can it with evaluators (ex: we can use llm as judge actual answer vs ai output) 
+In simple terms, if you want to test your agentic application, this evaluation is really helpful. First, we need to create the datasets (sample questions and answers) and we can test it with evaluators (e.g., we can use LLM as a judge to compare actual answer vs AI output). 
 
 ----
 
-### Graph Database
+## Graph Database
 
-   data will be stored in graph strutures, nodes,edges and labels.
-   Neo4j is one of the popular graph data base.
+Data will be stored in graph structures: nodes, edges, and labels. Neo4j is one of the popular graph databases.
 
-   Use Neo4j only if: (ex: social media apps, Supply Chain & Logistics)
-      Your data is heavily relational
+### Use Neo4j Only If
 
-      Queries involve multi-hop traversal
+Examples: social media apps, Supply Chain & Logistics
 
-      You need paths, not just records
+- Your data is heavily relational
+- Queries involve multi-hop traversal
+- You need paths, not just records
+- Structure matters more than text
 
-      Structure matters more than text
+### Don't Use Neo4j When
 
-   Don’t use Neo4j when:
-      Your data is mostly documents, JSON, or tables
+- Your data is mostly documents, JSON, or tables
+- Retrieval is semantic, not relational
+- The system is CRUD-heavy
+- Relationships are shallow (1–2 levels)
 
-      Retrieval is semantic, not relational
-
-      The system is CRUD-heavy
-
-      Relationships are shallow (1–2 levels)
-
-   ![graph](./assets/graph_data.jpeg)
+![Graph Database](./assets/graph_data.jpeg)
